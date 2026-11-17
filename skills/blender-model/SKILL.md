@@ -1,47 +1,60 @@
 ---
 name: blender-model
-description: Use when building a 3D asset from the brief - blockout, proportions, silhouette, props, hard-surface objects, modular environment pieces, characters, creatures. Builds to real size with clean transforms and the right primitives so topology work stays small.
+description: Use when building or editing ANY 3D asset from a brief or reference image - props, weapons, armor, vehicles, buildings/architecture, nature/foliage/rocks/crystals, modular kits, characters, creatures. Uses native MCP BMesh/modifier/curve tools and verifies visually with look.
 ---
-# Model (blockout -> clean base mesh)
+# Model (universal native modeling & image-to-3D -> verified base mesh)
 
 ## Requires
 `blender-out/<asset>/brief.md` (budget, style, engine). ref-analysis.md when a reference exists. state.md.
 
 ## Inputs
-Asset class (prop / hard-surface / env-kit / character / creature) -> read ONE file from `variants/`.
+Universal asset archetype -> read ONE file from `variants/`:
+- `variants/prop.md` (crates, furniture, tools, food, loot, everyday objects)
+- `variants/hard-surface.md` (machines, robots, electronics, sci-fi panels, turrets)
+- `variants/weapons-armor.md` (swords, axes, bows, firearms, shields, helmets, armor)
+- `variants/vehicles.md` (cars, bikes, spaceships, boats, aircraft, tanks, mechs)
+- `variants/architecture-interior.md` (buildings, rooms, arches, stairs, roofs, furniture)
+- `variants/env-kit.md` (snap-to-grid modular walls, floors, trims, dungeons)
+- `variants/nature-foliage.md` (trees, bushes, rocks, cliffs, crystals, terrain)
+- `variants/character.md` (humanoids, stylized/bloxy avatars, NPCs)
+- `variants/creature.md` (animals, monsters, birds, fish, serpents, bosses, pets)
 
 ## Steps
-1. SCENE: units metric, unit_scale 1.0 (check with scene_info.py). Collection `COL_<Asset>`. Object names per config.md.
-2. REFERENCE: if a reference exists, set it up with `references/reference-setup.md` (ortho cameras + image empties).
-3. BLOCKOUT: primitives at real dimensions from the brief [USER]/[ASSUMED]. One object per rigid part. Apply scale and rotation after every resize (recipe R1 in docs/blender/reference/bpy-recipes.md).
-3b. OPTIONS (no reference, open look; balanced or flex rigor): build 3 quick blockouts with different proportions or silhouettes, screenshot them side by side, ask the user to pick one (1 question). Strict rigor: ask the usual questions instead.
-4. SILHOUETTE: render front and side screenshots in ortho; compare with the reference overlay; fix the largest mismatch first (T1 forms), then T2.
-5. BASE MESH: follow the variant file for the class. Symmetric assets: model one half + Mirror modifier (keep the modifier until blender-topology).
-6. DETAIL PLAN: write which T3 details become texture/normal map (list in state.md Decisions).
-7. CLEAN: no booleans left unapplied; no interior faces; origin at the placement point from the variant file.
-8. AUDIT: run `audit_mesh.py` with BUDGET = 1.5 x budget at this stage (final budget is enforced in blender-topology).
-9. SCREENS: front, side, 3/4 in `blender-out/<asset>/screens/`.
+1. DECISION CHECK: if `state.md` lacks modeling decisions (`Q1: Creation method — Native Procedural BMesh/Modifiers vs Hybrid AI Image-to-3D + Surgical Cleanup`, `Q2: Real-world dimensions`, `Q3: Moving/articulated sub-parts`), present `Q1..Q3` with `(Recommended)` first.
+2. SCENE & CHECKPOINT: verify metric units (`unit_scale 1.0`) via `docs/blender/scripts/scene_info.py`. Call `workflow_checkpoint` (`ensure_checkpoint` in `docs/blender/scripts/blender_kit_ops.py`). Create collection `COL_<Asset>`.
+3. REFERENCE: if a reference exists, set it up with `references/reference-setup.md` (ortho cameras + image empties).
+4. NATIVE CREATION & SURGICAL EDITING (`blender-kit-mcp` / `docs/blender/scripts/blender_kit_ops.py`):
+   - **Parametric Parts (`mesh_create_primitive`):** create `box`, `cylinder`, `cone`, `pyramid`, `sphere`, `icosphere`, `capsule`, `torus`, `blade_foil`, `arch`, `crystal_shard`, `starburst_glint`, `fang`, `spike` with native bevels and bottom-center origins.
+   - **Pro BMesh Operations (`mesh_bmesh_edit` / `kit_bmesh_edit`):** shape parts natively with `bevel` (sharp/top/bottom/vertical edges), `extrude` (along normal/vector + scale), `inset`, `subdivide_edges` (loop cuts), `bisect` (planar cuts), `taper_twist` (blades, horns, roofs), `spin_lathe` (bottles, vases, wheels, pillars, barrels), and `symmetrize`.
+   - **3D Curves & Tubes (`curve_create_tube` / `kit_curve_tube`):** build cables, pipes, handles, tree trunks/vines, horns, or stylized hair strips with start-to-end taper.
+   - **Non-Destructive Modifiers (`mesh_modifier` / `kit_modifier`):** add/apply `MIRROR`, `BEVEL`, `SOLIDIFY`, `ARRAY`, `BOOLEAN`, `SIMPLE_DEFORM`, `WEIGHTED_NORMAL`.
+   - **AI Image-to-3D Path (`generate_3d`):** if using AI generation, immediately run `mesh_clean_and_strip_shells` to strip inner duplicate shells and replace broken appendages.
+5. AI VISION COMPARE LOOP (`look` + `audit_visual_match.py`):
+   - Capture `look(mode="angles", views=["front", "right", "back", "three_quarter"], shading="material")` and `shading="wireframe"`.
+   - Run `docs/blender/scripts/audit_visual_match.py`. Compare every sub-part against the reference image and fix any silhouette or detail mismatch before continuing.
+6. CLEAN & AUDIT: apply scale/rotation (`recipe R1` in `docs/blender/reference/bpy-recipes.md`), delete hidden interior/bottom faces, and run `docs/blender/scripts/audit_mesh.py` (`BUDGET = 1.5 * budget`).
+7. SCREENS: save front, side, 3/4 shaded and wireframe views in `blender-out/<asset>/screens/`.
 
 ## Hard rules
 | Rule | Detail |
 |---|---|
-| Real size | Dimensions come from [USER] or are labeled [ASSUMED]; never "looks about right" |
-| Primitives first | Start from the simplest primitive that has the right silhouette; do not subdivide to get shape |
-| No subdivision for volume | Subdivision modifiers are not allowed on the exported mesh |
-| Transforms applied | scale 1, rotation 0 before any later stage |
-| Characters | A-pose or the pose engine.md requires; slight elbow/knee bend (5-10 degrees); symmetric |
-| Separate what moves | Parts that move independently are separate objects (or separate vertex groups with rigid weights) |
+| Universal coverage | Always load the matching archetype file from `variants/` before modeling |
+| Native operations first | Use native MCP handlers (`mesh_create_primitive`, `mesh_bmesh_edit`, `mesh_modifier`, `curve_create_tube`) instead of fragile raw scripts |
+| Real size | Dimensions come from [USER] or [MEASURED] reference ratios |
+| Strip AI double shells | Every AI-generated mesh MUST run `mesh_clean_and_strip_shells` |
+| Vision verification | Never pass `blender-model` without inspecting `look` multi-angle screenshots against the reference |
+| Separate what moves | Wheels, doors, triggers, turrets, limbs, and floating shards get separate objects or bone groups |
 
 ## Done when
-audit_mesh: no ngons, no doubles, transforms applied, tris <= 1.5 x budget; silhouette screenshots match the reference (or brief); state.md Decisions list T3 details.
+audit_mesh: no ngons, no doubles, transforms applied, tris <= 1.5 x budget; `audit_visual_match.py` pass; AI vision check confirms silhouette matches reference; screenshots saved.
 
 ## On fail
 | Failure | Action |
 |---|---|
-| tris > 1.5 x budget at blockout | remove detail, not segments; reread variant file |
-| silhouette mismatch | fix the largest T1 form; re-screenshot |
+| tris > 1.5 x budget at blockout | run `docs/blender/scripts/optimize_quads_to_tris.py` or reduce bevel/curve segments |
+| silhouette mismatch in `look` | refine with `kit_bmesh_edit` (`bevel`, `extrude`, `taper_twist`, `spin_lathe`) and re-screenshot |
 | hands needed for a character | run blender-hands before topology |
-| sculpt-based source | blender-retopo |
+| dense sculpt source | blender-retopo |
 
 ## Next
 blender-topology (then uv-bake). Characters: blender-hands first.

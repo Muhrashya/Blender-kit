@@ -1,0 +1,16 @@
+[project]
+name = "blender-kit-mcp"
+version = "0.4.0"
+description = "Structured Blender Creation, Surgical BMesh Editing, Quad-to-Tri Topology, Zero-Bleed Texture Atlas, Gleam VFX & Pro Animation MCP Server for blender-kit"
+readme = "../SETUP.md"
+requires-python = ">=3.10"
+dependencies = [
+    "mcp[cli]>=1.2.0",
+]
+
+[project.scripts]
+blender-kit-mcp = "blender_kit_mcp.server:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

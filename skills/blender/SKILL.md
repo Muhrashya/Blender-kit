@@ -1,12 +1,12 @@
 ---
 name: blender
-description: Use for ANY Blender or 3D game-asset request and for EVERY follow-up message in a Blender session - props, characters, hands, environments, VFX, retopology, fixing topology, rigging, animation, export, troubleshooting. Classifies each message, loads the right skill, keeps state, switches skills when the question changes.
+description: Use for ANY Blender or 3D game-asset request and for EVERY follow-up message in a Blender session - props, characters, hands, environments, VFX, gleam effects, retopology, fixing topology, rigging, animation, export, troubleshooting. Classifies each message, asks Q1..Qn decision lists, loads the right skill, keeps state, and verifies visually.
 ---
 # /blender - router
 
 ## Requires
 - `docs/blender/config.md`, `docs/blender/ground-rules.md`, `docs/blender/assets.md`. Missing: run `blender-setup`, stop.
-- Blender MCP connected, or SCRIPT MODE (ground-rules.md section 7).
+- Blender MCP connected (`blender` / `blender-kit-mcp` + `docs/blender/scripts/blender_kit_ops.py`), or SCRIPT MODE (ground-rules.md section 7).
 
 ## Inputs
 `/blender <mode> "<what>" [ref=<file>] [role=<budget row>] [tris=<n>] [style=<name>] [engine=<name>] [platform=pc|mobile]`
@@ -14,11 +14,12 @@ Modes: `prop char hands env match rig anim fx cam retopo fix optimize export aud
 
 ## Steps
 1. PRE-FLIGHT once per session: read config.md, ground-rules.md, assets.md. Run `docs/blender/scripts/scene_info.py`. Quote Blender version.
-2. RIGOR: read `rigor` from config.md (or `rigor=`) and follow ground-rules.md section 10. Waiver words (waive, skip this check, abaikan, lewati): record in state.md `waivers`, mark the gate WAIVED, continue; never waive the never-list.
+2. RIGOR: read `rigor` and `ask_mode` from config.md and follow ground-rules.md section 10. Waiver words (waive, skip this check, abaikan, lewati): record in state.md `waivers`, mark the gate WAIVED, continue; never waive the never-list.
 2b. CLASSIFY every user message with `references/intents.md` BEFORE acting. Output one line: `INTENT: <intent> -> <skill>`.
+2c. DECISION INTERVIEW (Matt Pocock Q1, Q2, Q3 style): before executing any stage that has unresolved design choices, read `references/decision-interview.md` and present a numbered `Q1, Q2, Q3` Decision List with `(Recommended)` first. Lock answers into `state.md` `Decisions` with `[USER]`.
 3. SAME TOPIC as current stage: continue. DIFFERENT TOPIC: push current stage to `paused` in state.md, load the matching skill, answer, then print `BACK TO: <stage>`.
-4. NEW ASSET: print the matching card of `docs/blender/reference/build-guide.md` as at most 5 short plan lines (diagram: `docs/blender/reference/figures/pipeline.png`), then write `blender-out/<asset>/brief.md` from `docs/blender/templates/brief.md`, then `state.md` from `docs/blender/templates/state.md`, with the chain from `references/routes.md`. Ask max 3 questions, only for missing facts.
-5. RUN one stage: load that skill, do only its Steps, run its audit.
+4. NEW ASSET: print the matching card of `docs/blender/reference/build-guide.md` as at most 5 short plan lines (diagram: `docs/blender/reference/figures/pipeline.png`), then write `blender-out/<asset>/brief.md` from `docs/blender/templates/brief.md`, then `state.md` from `docs/blender/templates/state.md`, with the chain from `references/routes.md`.
+5. RUN one stage: load that skill, use structured creation/editing tools (`docs/blender/scripts/blender_kit_ops.py` or `blender-kit-mcp`), visually inspect via `look` (multi-angle + wireframe/frames), and run its audit.
 6. REPORT with the Stage report format below. Update state.md and assets.md.
 7. INVALIDATE: when a stage changed the mesh/rig/UV, mark every later stage STALE using the table in `references/routes.md`.
 8. GATE: PASS -> next stage in chain. FAIL -> follow that skill's On fail table. Never skip a failed stage.
@@ -29,20 +30,23 @@ STAGE: <skill> | ASSET: <name>
 RESULT: PASS | FAIL
 NUMBERS: <key>=<value> [MEASURED] ...
 SCREENS: <file names or none>
+VISUAL MATCH: <comparison vs reference / silhouette / UV bleed check>
 OPEN ASSUMPTIONS: <list or none>
-NEXT: <skill or question>
+NEXT: <skill or Q1..Qn decision list>
 ```
 
 ## Hard rules
 | Rule | Detail |
 |---|---|
 | No fluff | No greeting, praise, recap or explanation of what you are about to do. Report format only |
-| Stages per turn | strict: one; balanced: chain consecutive PASS stages for low-risk assets; flex: chain until the first FAIL. "run all" always stops at the first FAIL |
+| Decision list first | Before any stage with open design branches, ask `Q1, Q2, Q3` per `references/decision-interview.md` with `(Recommended)` first |
+| Structured creation & edit | Prefer structured operators (`blender_kit_ops.py` / `blender-kit-mcp`) and non-destructive checkpoints before raw ad-hoc scripts |
+| Visual verification | Every visual stage must inspect the model via `look` (angles + wireframe/frames) and run `docs/blender/scripts/audit_visual_match.py` when a reference or texture exists |
+| Stages per turn | strict: one; balanced: chain consecutive PASS stages when no stage decisions remain; flex: chain until the first FAIL |
 | Interrupt safe | A side question never loses the current stage: state.md `paused` stack |
 | Non-Blender message | Answer normally. Do not load skills. Do not touch state.md |
 | Evidence | Every number in a report is [MEASURED] from an audit script of this session |
 | No export without SHIP | blender-export requires a PASS from blender-qa for the same asset version |
-| Ask rule | Max 3 questions per turn; never ask what config.md, engine.md or state.md already says |
 
 ## Done when
 state.md `status` = SHIP and blender-export produced a verified file, or the user ends the task.
@@ -52,8 +56,8 @@ state.md `status` = SHIP and blender-export produced a verified file, or the use
 |---|---|
 | config.md missing | run blender-setup init |
 | MCP not connected | script mode; show `docs/blender/` mcp-setup note via blender-setup |
-| Two skills match equally | take the earlier row of intents.md; ask 1 question only if the result differs a lot |
-| Audit script errors | print the error, fix the script call, never skip the audit |
+| Two skills match equally | take the earlier row of intents.md; include in `Q1` decision list if the result differs |
+| Audit or visual match fails | print the defect, run surgical repair (`blender_kit_ops.py`), re-verify with `look` |
 | User asks to skip an audit | refuse; offer to run it |
 
 ## Next

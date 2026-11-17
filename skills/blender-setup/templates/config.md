@@ -3,6 +3,8 @@
 engine: generic-gltf        # name of the active profile; the full profile is docs/blender/engine.md
 style: lowpoly              # voxel | lowpoly | stylized | realistic; the full file is docs/blender/style.md
 rigor: balanced             # strict | balanced | flex (how rigid the workflow is; see ground-rules.md section 10)
+ask_mode: stage_decisions   # stage_decisions (ask Q1..Qn before every stage with decisions) | every_call | upfront_grill
+creation_mode: hybrid       # hybrid (Procedural BMesh + AI Image-to-3D + surgical cleanup) | procedural | ai_retopo
 fx_style: stylized          # realistic | stylized | lowpoly | voxel (defaults to style; override per effect with fx=)
 platform: pc                # pc | mobile  (mobile = use the Mobile column)
 up_axis_blender: Z
