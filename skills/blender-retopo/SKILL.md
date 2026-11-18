@@ -11,12 +11,12 @@ Source mesh (HP). Brief with budget, style, deforming yes/no. Checkpoint. `docs/
 HP object name | target tris | deforming? | symmetric?
 
 ## Steps
-1. CHECKPOINT (`checkpoint.py`, STAGE = "pre-retopo"). Duplicate HP as `SM_<Name>_HP`, hide it. Never edit the original.
-2. CLEAN HP: merge doubles (R3), fill holes, recalc normals (R2), apply scale (R1). Run `audit_mesh.py` on HP with a huge BUDGET to read tris; no budget check on HP.
+1. CHECKPOINT (`workflow_checkpoint(asset_name=..., tag="pre-retopo")` or `checkpoint.py`). Duplicate HP as `SM_<Name>_HP` (or use `mesh_compile_target(target_mode="dual_cage")` to backup `.kit_cage_<obj>`), hide it. Never edit the original.
+2. CLEAN HP: call `mesh_clean_and_strip_shells(weld_dist=0.0005, strip_inner_shells=True)` and `mesh_transform_and_assemble(apply_scale=True)`. Run `audit_run_isolated(audit_type="mesh", budget=0)` on HP to read tris.
 3. PLAN (write in state.md Decisions): method from `references/methods.md` section 1, target quads = budget / 2, guide loops for joints and eyes/mouth from `docs/blender/reference/deformation-zones.md`.
 4. BUILD LP: follow the chosen method in methods.md. Create the LP as a new object `SM_<Name>_LP` (characters: `SK_<Name>_LP`).
-5. CLEAN LP: `audit_topology.py` (ARMATURE if exists). Apply blender-topology-fix recipes until its Done thresholds hold.
-6. PROJECT: shrinkwrap LP onto HP (nearest surface point), apply (methods.md section 3). Re-audit.
+5. CLEAN LP: `audit_run_isolated(audit_type="topology", target_objects=[...])`. Apply blender-topology-fix recipes (`mesh_subd_and_loops`, `topo_optimize_quads_to_tris`) until its Done thresholds hold.
+6. PROJECT: shrinkwrap LP onto HP (`mesh_modifier(obj_name=LP, mod_type="SHRINKWRAP", settings={"target": HP, "wrap_method": "NEAREST_SURFACEPOINT"}, apply_now=True)`), apply (methods.md section 3). Re-audit.
 7. SILHOUETTE: screenshots HP vs LP, front, side, 3/4, same camera. Reject if the outline differs visibly.
 8. BUDGET: tris <= budget, else cut with the blender-topology section 6 order (never joint loops first).
 9. KEEP HP until the bake is verified (blender-uv-bake).

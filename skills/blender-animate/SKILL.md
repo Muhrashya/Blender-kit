@@ -15,12 +15,12 @@ Clips: name, type (loop / one-shot), motion recipe (`overlapping_wave` | `floati
 2. FPS: set scene fps from engine.md (UNVERIFIED -> ask in `Q2`; label [USER]). Never key at one fps and export at another.
 3. CLIP LIST: write the table into state.md Decisions (name, frames, loop, root motion, recipe).
 4. PRO MOTION GENERATION: read `references/pro-motion-recipes.md`, `references/cycles.md`, `references/combat.md`, `references/props.md`:
-   - For serpentine, multi-segment, tail, cape, or floating crystal rigs: run `anim_pro_motion` from `docs/blender/scripts/blender_kit_ops.py` (`motion_type="overlapping_wave"` or `"floating_idle"`) so child bones follow parent bones with smooth phase-offset sine waves ($\Delta\phi = 0.45\text{–}0.75\text{ rad}$) and root-to-tip amplitude progression.
-   - For attacks and interactions: key 3-phase poses (anticipation wind-up -> strike with `+8%` overshoot -> damped settle) using `BEZIER` `AUTO_CLAMPED` F-curves.
+   - For serpentine, multi-segment, tail, cape, or floating crystal rigs: call MCP tool `anim_pro_motion` (script mode: `kit_pro_motion` in `docs/blender/scripts/blender_kit_ops.py`; `motion_type="overlapping_wave"` or `"floating_idle"`, `set_scene_range=False` in swarm mode) so child bones follow parent bones with smooth phase-offset sine waves ($\Delta\phi = 0.45\text{–}0.75\text{ rad}$) and root-to-tip amplitude progression.
+   - For attacks and interactions: call `anim_pro_motion(motion_type="attack_anticipation")` to key 3-phase poses (anticipation wind-up -> strike with `+8%` overshoot -> damped settle) using `BEZIER` `AUTO_CLAMPED` F-curves.
 5. LOOPS: first and last pose identical (`loop_closed = True`); loop clip names end with `_loop` (config.md).
 6. ROOT MOTION & NAMING: keep root fixed for in-place clips; name actions `AN_<Asset>_<Clip>` (+ `_loop`); set `use_fake_user = True`.
 7. VISUAL FRAME-STRIP CHECK: call `look(mode="frames", target=[armature], frame_count=6, shading="material")` to visually verify smooth arcs, overlapping follow-through, and zero mesh tearing across the timeline.
-8. AUDIT: run `docs/blender/scripts/audit_anim.py` (ROOT_BONE set when root motion matters); save key pose screenshots.
+8. AUDIT: call `audit_run_isolated(audit_type="anim")` (or `docs/blender/scripts/audit_anim.py`); save key pose screenshots to the OS Session Vault.
 
 ## Hard rules
 | Rule | Detail |

@@ -11,12 +11,12 @@ A mesh object. Checkpoint saved. Armature if it exists (for joint checks). brief
 Object name. Optional: deforming? yes/no, symmetric? yes/no.
 
 ## Steps
-1. CHECKPOINT: `scripts/checkpoint.py` (STAGE = "pre-fix").
-2. MAP: run `audit_mesh.py` and `audit_topology.py` (set ARMATURE and SYMMETRIC when they apply; SELECT_DEFECTS = True). Save both JSON outputs to `blender-out/<asset>/audit/fix_before.json`.
-3. CLASSIFY every nonzero count with `references/fix-recipes.md` section 1 (severity + recipe). Order: A (safe cleanup) -> B (face-type fixes) -> C (flow fixes) -> D (rebuild).
-4. REPAIR in that order. After EACH recipe group re-run `audit_topology.py`; stop a recipe that makes any count worse and restore the checkpoint.
+1. CHECKPOINT: call `workflow_checkpoint(asset_name=..., tag="pre-fix")` (or `scripts/checkpoint.py`).
+2. MAP: run `audit_run_isolated(audit_type="topology", target_objects=[...], target_mode=...)` (or `audit_mesh.py` and `audit_topology.py`). Save before-fix audit JSON to `<session_dir>/assets/<asset>/audit/fix_before.json`.
+3. CLASSIFY every nonzero count with `references/fix-recipes.md` section 1 (severity + recipe). Order: A (`mesh_clean_and_strip_shells` safe cleanup) -> B (`mesh_subd_and_loops` / `topo_optimize_quads_to_tris` face-type fixes) -> C (flow fixes) -> D (rebuild).
+4. REPAIR in that order using native MCP tools (`mesh_clean_and_strip_shells`, `mesh_subd_and_loops`, `mesh_bmesh_edit`, `topo_optimize_quads_to_tris`). After EACH recipe group re-run `audit_run_isolated(audit_type="topology")`; stop a recipe that makes any count worse and restore the checkpoint.
 5. ESCALATE using the thresholds in `references/fix-recipes.md` section 3: local patch retopo or full blender-retopo.
-6. VERIFY: `audit_mesh.py` + `audit_topology.py` again; wireframe screenshots front, side, each joint close-up.
+6. VERIFY: `audit_run_isolated(audit_type="all", target_objects=[...])`; wireframe screenshots front, side, each joint close-up.
 7. REPORT before/after table (counts per defect type) + screenshots. Update state.md: topology, uv-bake, hands, rig, animate, qa, export -> STALE.
 
 ## Hard rules

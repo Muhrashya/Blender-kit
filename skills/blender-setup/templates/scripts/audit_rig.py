@@ -1,13 +1,28 @@
-# audit_rig.py - skin and skeleton checks. Select the armature AND its meshes, then run. Prints JSON.
+# audit_rig.py - skin and skeleton checks. Context-free by default (prefers ARMATURE/TARGETS, else scene objects).
 import bpy, json
 
-MAX_INFLUENCES = 4      # from engine.md; if engine.md says UNVERIFIED keep 4 as [START]
+TARGET_MODE = "game_realtime"  # "game_realtime" | "film_cinematic"
+MAX_INFLUENCES = 8 if TARGET_MODE == "film_cinematic" else 4
 MAX_BONES = None        # from engine.md or None (then report only)
 WEIGHT_MIN = 0.001
+ARMATURE = None         # explicit armature object name, or None = auto-detect
+TARGETS = []            # explicit list of mesh object names, or [] = auto-detect
 
-arm = next((o for o in bpy.context.selected_objects if o.type == "ARMATURE"), None)
-meshes = [o for o in bpy.context.selected_objects if o.type == "MESH"]
-res = {"armature": arm.name if arm else None}
+arm = (
+    bpy.data.objects[ARMATURE]
+    if (ARMATURE and ARMATURE in bpy.data.objects)
+    else next((o for o in bpy.context.selected_objects if o.type == "ARMATURE"), None)
+    or next((o for o in bpy.context.scene.objects if o.type == "ARMATURE"), None)
+)
+if TARGETS:
+    meshes = [bpy.data.objects[n] for n in TARGETS if n in bpy.data.objects and bpy.data.objects[n].type == "MESH"]
+else:
+    meshes = [o for o in bpy.context.selected_objects if o.type == "MESH"] or [
+        o for o in bpy.context.scene.objects
+        if o.type == "MESH" and (o.parent == arm or any(md.type == "ARMATURE" and md.object == arm for md in o.modifiers))
+    ]
+
+res = {"armature": arm.name if arm else None, "target_mode": TARGET_MODE}
 if not arm:
     res["pass"] = False
     res["failed"] = ["no_armature_selected"]

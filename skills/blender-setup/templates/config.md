@@ -1,15 +1,18 @@
 # Blender Kit config (edit freely; every skill reads this first)
 
 engine: generic-gltf        # name of the active profile; the full profile is docs/blender/engine.md
+target_mode: game_realtime  # game_realtime | film_cinematic | dual_cage
 style: lowpoly              # voxel | lowpoly | stylized | realistic; the full file is docs/blender/style.md
 rigor: balanced             # strict | balanced | flex (how rigid the workflow is; see ground-rules.md section 10)
 ask_mode: stage_decisions   # stage_decisions (ask Q1..Qn before every stage with decisions) | every_call | upfront_grill
 creation_mode: hybrid       # hybrid (Procedural BMesh + AI Image-to-3D + surgical cleanup) | procedural | ai_retopo
+swarm_mode: auto            # auto (spawn 5-role swarm for multi-part assets) | single | swarm
+session_storage: appdata    # appdata (zero-footprint OS App-Data Session Vault) | workspace
 fx_style: stylized          # realistic | stylized | lowpoly | voxel (defaults to style; override per effect with fx=)
 platform: pc                # pc | mobile  (mobile = use the Mobile column)
 up_axis_blender: Z
 units: metric, unit_scale 1.0
-output_root: blender-out/<asset>/     # brief.md, ref-analysis.md, audit/, screens/, checkpoints/, export/
+output_root: blender-out/<asset>/     # resolved inside OS App-Data Session Vault when session_storage = appdata
 
 ## Naming (prefix_PascalCase_Variant)
 | Type | Prefix | Example |
@@ -17,16 +20,17 @@ output_root: blender-out/<asset>/     # brief.md, ref-analysis.md, audit/, scree
 | Collection | COL_ | COL_Crate |
 | Static mesh | SM_ | SM_Crate_LP |
 | Skinned mesh | SK_ | SK_Knight_LP |
-| High-poly (bake source) | suffix _HP | SM_Crate_HP |
+| High-poly / SubD cage | suffix _HP | SM_Crate_HP |
 | Low-poly (game mesh) | suffix _LP | SM_Crate_LP |
 | Material | MAT_ | MAT_Crate |
 | Texture | T_ | T_Crate_BaseColor |
+| Geometry Nodes tree | GN_ | GN_Crate_Scatter |
 | Armature | ARM_ | ARM_Knight |
 | Animation action | AN_ | AN_Knight_Walk_loop |
 | Effect object | FX_ / SM_FX_ / T_FX_ | SM_FX_Slash |
 | Camera / Light | CAM_ / LGT_ | CAM_Ref |
 
-## Triangle budgets  [START]  (starting points, NOT engine limits; engine limits live in engine.md)
+## Triangle budgets (game_realtime) [START] (starting points, NOT engine limits; engine limits live in engine.md)
 Budget = triangles of the FINAL evaluated mesh (modifiers applied), per object.
 | Role | PC | Mobile |
 |---|---|---|
@@ -41,6 +45,15 @@ Budget = triangles of the FINAL evaluated mesh (modifiers applied), per object.
 | fx-mesh | 20-300 | 20-150 |
 Rule: pick the LOW end of the row unless the silhouette fails the check in blender-topology. Exceeding a budget needs user approval.
 Unknown role: pick the closest row, label it [ASSUMED], tell the user.
+
+## Control-cage quad budgets (film_cinematic) [START]
+Base control-cage quad count before Catmull-Clark SUBSURF evaluation (`levels=2`, `render_levels=3`):
+| Role | Base Cage Quads | Max Render SubD Level |
+|---|---|---|
+| prop-small | 200-1,200 | 2 |
+| prop-mid | 1,000-4,000 | 2 |
+| prop-hero | 3,000-12,000 | 3 |
+| char-hero / creature | 8,000-35,000 | 3 |
 
 ## Textures  [START]
 texel_density_px_per_m: 256       # one value per project; keep every asset within +-20 percent

@@ -1,21 +1,30 @@
 # audit_topology.py - defect MAP of the BASE mesh (what you edit, not the evaluated mesh). Prints JSON.
-# Finds: ngons, tris, non-planar quads, thin faces, poles, density spikes, poles/tris/ngons near joints,
-# symmetry breaks, pole balance. Optionally selects the defects so the user can see them.
+# Context-free by default (SELECT_DEFECTS = False, resolves explicit TARGET/TARGETS or visible scene mesh).
 import bpy, bmesh, json, math, statistics
 from mathutils import Vector, kdtree
 
-TARGET = None              # object name, or None = active object
+TARGET = None              # single object name, or None
+TARGETS = []               # optional list of object names
 ARMATURE = None            # armature object name (enables joint checks), or None
+TARGET_MODE = "game_realtime"  # "game_realtime" | "film_cinematic"
 JOINT_RADIUS_EDGES = 3.0   # [START] joint zone radius = this x median edge length
 THIN_RATIO = 4.0           # [START] quad longest/shortest edge ratio flagged above this
 SPIKE_RATIO = 3.0          # [START] edge length vs median flagged above this (or below 1/this)
 NONPLANAR = 0.05           # [START] max vertex distance from face plane / mean edge length
 SYMMETRIC = False          # True: check X mirror symmetry (local space)
 SYM_TOL = 1e-3
-SELECT_DEFECTS = True
+SELECT_DEFECTS = False     # False by default so parallel agents never mutate viewport selection
 LIMIT = 30                 # max indices listed per defect
 
-obj = bpy.data.objects[TARGET] if TARGET else bpy.context.view_layer.objects.active
+if TARGET and TARGET in bpy.data.objects:
+    obj = bpy.data.objects[TARGET]
+elif TARGETS and TARGETS[0] in bpy.data.objects:
+    obj = bpy.data.objects[TARGETS[0]]
+elif bpy.context.view_layer.objects.active and bpy.context.view_layer.objects.active.type == "MESH":
+    obj = bpy.context.view_layer.objects.active
+else:
+    obj = next((o for o in bpy.context.scene.objects if o.type == "MESH" and o.visible_get()), None)
+
 if obj is None or obj.type != "MESH":
     raise RuntimeError("select or name a mesh object")
 me = obj.data
@@ -29,6 +38,11 @@ med = statistics.median(lengths) if lengths else 0.0
 
 ngons = [f.index for f in bm.faces if len(f.verts) > 4]
 tris = [f.index for f in bm.faces if len(f.verts) == 3]
+curved_angle_rad = math.radians(2.5)
+curved_surface_tris = [
+    f.index for f in bm.faces
+    if len(f.verts) == 3 and any(len(e.link_faces) == 2 and e.calc_face_angle(0.0) > curved_angle_rad for e in f.edges)
+]
 nonplanar, thin = [], []
 for f in bm.faces:
     if len(f.verts) != 4:
@@ -58,7 +72,7 @@ all_quads = all(len(f.verts) == 4 for f in bm.faces)
 pole_balance = sum(4 - len(v.link_edges) for v in bm.verts) if closed and all_quads else None
 
 joint_report = None
-if ARMATURE:
+if ARMATURE and ARMATURE in bpy.data.objects:
     arm = bpy.data.objects[ARMATURE]
     joints = [arm.matrix_world @ b.head_local for b in arm.data.bones if b.parent]
     inv = obj.matrix_world.inverted()
@@ -84,13 +98,14 @@ if SYMMETRIC:
                   "center_verts_off_plane": off_plane[:LIMIT], "count_off_plane": len(off_plane)}
 
 res = {
-    "object": obj.name, "faces": len(bm.faces), "tris_faces": len(tris), "ngons": len(ngons),
+    "object": obj.name, "target_mode": TARGET_MODE, "faces": len(bm.faces), "tris_faces": len(tris), "ngons": len(ngons),
     "median_edge_length": round(med, 5),
-    "counts": {"ngons": len(ngons), "tri_faces": len(tris), "nonplanar_quads": len(nonplanar), "thin_quads": len(thin),
+    "counts": {"ngons": len(ngons), "tri_faces": len(tris), "curved_surface_tris": len(curved_surface_tris),
+               "nonplanar_quads": len(nonplanar), "thin_quads": len(thin),
                "poles_3": len(poles3), "poles_5": len(poles5), "poles_6plus": len(poles6p), "density_spikes": len(spikes)},
-    "indices": {"ngons": ngons[:LIMIT], "tri_faces": tris[:LIMIT], "nonplanar_quads": nonplanar[:LIMIT],
-                "thin_quads": thin[:LIMIT], "poles_5": poles5[:LIMIT], "poles_6plus": poles6p[:LIMIT],
-                "density_spike_edges": spikes[:LIMIT]},
+    "indices": {"ngons": ngons[:LIMIT], "tri_faces": tris[:LIMIT], "curved_surface_tris": curved_surface_tris[:LIMIT],
+                "nonplanar_quads": nonplanar[:LIMIT], "thin_quads": thin[:LIMIT],
+                "poles_5": poles5[:LIMIT], "poles_6plus": poles6p[:LIMIT], "density_spike_edges": spikes[:LIMIT]},
     "closed_manifold": closed, "all_quads": all_quads,
     "pole_balance_sum_4_minus_valence": pole_balance,
     "pole_balance_note": "For a closed all-quad mesh this sum = 4 x Euler characteristic, so it must be a multiple of 8 (8 for a sphere-like mesh). Otherwise the mesh is not a clean closed quad mesh.",

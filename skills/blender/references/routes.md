@@ -30,18 +30,18 @@ Contents: 1 chains | 2 stage gates | 3 invalidation | 4 failure routing | 5 skip
 | Stage | Gate (all required) |
 |---|---|
 | ref | ref-analysis.md complete; `Q1..Q3` creation decisions locked; no critical unknown left |
-| model | `look` silhouette matches ref (`audit_visual_match.py` pass); objects named; transforms applied; tris <= 1.5 x budget |
-| topology | `audit_mesh.py` pass; `optimize_quads_to_tris.py` pass (ngons 0, double shells stripped, poles not near joints, tris <= budget) |
+| model | `look` silhouette matches ref (`audit_visual_match.py` pass); objects named; transforms applied via `mesh_transform_and_assemble` |
+| topology | `audit_run_isolated` pass: in `game_realtime`, `mesh_compile_target` pass (`ngons == 0`, double shells stripped, poles not near joints, `tris <= budget`); in `film_cinematic`, 100% quad cage (`ngons == 0`, `curved_surface_tris == 0`, `pole_balance % 8 == 0`, `SUBSURF` present) |
 | topology-fix | `audit_topology.py` counts at or below thresholds in blender-topology-fix; before/after numbers reported |
 | retopo | audit pass; silhouette HP vs LP match; HP kept |
 | hands | per-hand tris within the hand budget; ring continuity true; joint loops present |
 | uv-bake | `has_uv`; texel density within tolerance; `audit_visual_match.py` `bleed_ratio <= 0.05`; bake verified by `look` |
-| material | only exportable Principled PBR + clean textures; zero white occlusion blotches; names `MAT_`/`T_` |
-| rig | `audit_rig.py` pass; 3 test poses per joint without artifacts (`look` screenshots) |
+| material | Principled PBR or declarative `node_graph_build` tree valid; zero white occlusion blotches; names `MAT_`/`T_` |
+| rig | `audit_rig.py` / `audit_run_isolated(audit_type="rig")` pass; 3 test poses per joint without artifacts (`look` screenshots) |
 | animate | `audit_anim.py` pass; loop clips closed; `look(mode="frames")` confirms fluid overlapping motion |
 | vfx-* | their own audit pass; flipbooks also `audit_fx_style.py`; FX spec complete |
 | camera | `audit_camera.py` pass for every shot; shot list complete; screenshots saved |
-| qa | verdict SHIP (`audit_visual_match.py` pass + zero blockers/majors) |
+| qa | verdict SHIP (`audit_run_isolated` pass + zero blockers/majors) |
 | export | file exists and non-empty; export report written |
 
 ## 3. Invalidation (a change at stage S marks these STALE)
@@ -61,7 +61,7 @@ STALE stage = run its audit again before continuing. Do not redo the whole stage
 |---|---|
 | ngons, thin or non-planar quads, poles near joints, missing joint loops, double shells | blender-topology-fix / `optimize_quads_to_tris.py` |
 | topology-fix defect rate above its escalation threshold | blender-retopo |
-| rig deformation artifacts | blender-diagnose -> topology-fix -> rig |
+| rig deformation artifacts | blender-diagnose -> blender-topology-fix -> blender-rig |
 | bake artifacts, stretched textures, white occlusion patches, UV bleed | blender-uv-bake -> blender-material |
 | wrong scale/axis in engine | blender-export (import test), then blender-diagnose |
 | camera audit fails (framing, horizon, clip planes) | blender-camera |
@@ -72,7 +72,7 @@ STALE stage = run its audit again before continuing. Do not redo the whole stage
 | Condition | Skip or shorten |
 |---|---|
 | no reference image | skip ref |
-| static asset (no deforming, no animation) | skip rig and animate; topology uses static rules (`optimize_quads_to_tris.py`) |
+| static asset (no deforming, no animation) | skip rig and animate; topology uses static rules |
 | source is not a sculpt, scan or AI mesh | skip retopo |
 | style voxel or lowpoly with palette | uv-bake takes the zero-bleed per-facet cell atlas or palette path |
 | character with blocky hands (voxel) | blender-hands blocky variant |

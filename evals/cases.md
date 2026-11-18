@@ -86,3 +86,13 @@ Contents: A pipeline | B routing and interruption | C topology and hands | D hal
 | H6 | `python3 tools/make_figures.py` | all patterns verified, hand numbers match docs, exit code 0 |
 | H7 | "show me a 3 to 1 transition" | agent opens figures/transition-patterns.png and quotes verified-patterns.json (2 quads... poles 2) |
 | H8 | edit a hand tier number in the doc only | make_figures.py reports DOC MISMATCH |
+
+
+## I. v3.0 Dual-Target (`film_cinematic` SubD), Declarative Node/Rig Builders & 5-Role Swarm
+| # | Prompt / test | Expect |
+|---|---|---|
+| I1 | `/blender prop "CyberKatana" target=film_cinematic` in a folder without `docs/blender/` | `session_manage(action="init")` creates `%LOCALAPPDATA%/blender-kit/sessions/<stem>_<uuid>/`; zero files written to working directory; `mesh_subd_and_loops` adds holding loops + creases + `SUBSURF`; `audit_run_isolated(target_mode="film_cinematic")` passes (`ngons == 0`, `curved_surface_tris == 0`, `pole_balance % 8 == 0`) |
+| I2 | `mesh_compile_target(target_mode="dual_cage")` on a SubD control cage | produces both `SM_<Asset>_HP` (live Catmull-Clark `SUBSURF`) and `SM_<Asset>_LP` (game-ready triangulated within `tri_budget`), preserving `.kit_cage_<obj>` backup |
+| I3 | `node_graph_build(tree_type="SHADER", macro="edge_cavity_wear")` | builds Principled BSDF + Geometry Pointiness + ColorRamp node tree with version-safe socket aliases |
+| I4 | `rig_build_armature` with `bones`, `constraints` (`IK`), and `bind_meshes` (`ENVELOPE_KDTREE`) | creates `ARM_<Asset>`, attaches IK constraint, binds normalized weights (`max_influences <= 4`), restores previous viewport selection/mode via `atomic_context_guard` |
+| I5 | `python -m unittest discover -s tests -v` | all 18 handlers, legacy aliases, zero-footprint OS App-Data Session Vault, checkpoint pruning, and 5-role `_DATABLOCK_LEASES` (`LEASE_VIOLATION` on cross-role writes) pass |

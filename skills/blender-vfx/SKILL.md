@@ -15,11 +15,11 @@ Effect name | fx style (`fx=` or config.md `fx_style`) | trigger (loop / one-sho
 2. ENGINE: read engine.md VFX rows; mark each as [DOC], [RECALLED] or UNVERIFIED in the spec.
 3. STYLE: fx_style = `fx=` argument, else config.md `fx_style`, else `style`. Read that column of `docs/blender/reference/vfx-styles.md` (shape language, alpha edges, colors, frames, triangles, motion).
 4. RECIPE: find the effect in `references/cookbook.md` or `references/gleam-and-shimmer.md` (for gleam sweeps, crystal glints, starbursts, and fresnel rim glow); take its layers and the style variant.
-5. CLASSIFY with `references/effect-types.md`: choose the CHEAPEST type that reads at the camera distance: gleam sweep / starburst mesh (`surface_add_gleam_effect` in `docs/blender/scripts/blender_kit_ops.py`), texture+mesh, flipbook, trail, chunks, baked.
+5. CLASSIFY with `references/effect-types.md`: choose the CHEAPEST type that reads at the camera distance: gleam sweep / starburst mesh (`surface_add_gleam_effect`; script mode `kit_add_gleam_effect` in `docs/blender/scripts/blender_kit_ops.py`), declarative shader/compositor/geometry-node graph (`node_graph_build`), texture+mesh, flipbook, trail, chunks, baked.
 6. TIMING: effect-types.md section 2 [START] and the life curve: build 10-20 percent, peak 20-30, fade 50-70.
-7. SPEC: copy `docs/blender/templates/fx-spec.md` to `blender-out/<fx>/FX_<Name>.spec.md`; fill type, style, trigger, duration, fps, palette, blend, the LAYERS table, engine recipe draft, budgets.
+7. SPEC: copy `docs/blender/templates/fx-spec.md` to `<session_dir>/assets/<fx>/FX_<Name>.spec.md` (or `blender-out/<fx>/` on SHIP); fill type, style, trigger, duration, fps, palette, blend, the LAYERS table, engine recipe draft, budgets.
 8. ROUTE & EXECUTE:
-   - gleam / glint -> run `surface_add_gleam_effect` (`mode="shader_sweep"` and/or `mode="starburst_mesh"`) from `docs/blender/scripts/blender_kit_ops.py` per `references/gleam-and-shimmer.md`;
+   - gleam / glint -> call `surface_add_gleam_effect` (`mode="shader_sweep"` and/or `mode="starburst_mesh"`) or `node_graph_build(tree_type="COMPOSITOR", target_name="Scene", macro="comp_cinematic_glare_grade")` per `references/gleam-and-shimmer.md`;
    - mesh -> blender-vfx-texture then blender-vfx-mesh;
    - flipbook -> (blender-vfx-sim if volumetric and style is realistic) then blender-vfx-flipbook;
    - trail -> blender-vfx-texture; chunks -> blender-vfx-sim.

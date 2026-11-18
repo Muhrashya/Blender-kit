@@ -1,7 +1,7 @@
 {
   "name": "blender-kit",
-  "version": "0.3.0",
-  "description": "Agent Skills for Blender: game-ready assets, clean topology, retopology, rigging, animation, cinematic camera and VFX (realistic or low-poly) with swappable engine profiles.",
+  "version": "3.0.0",
+  "description": "Universal Agent Skills & Context-Free Native MCP for Blender (Game Realtime & Film Catmull-Clark SubD): Q1..Qn decision interviews, 5-role multi-agent swarm, zero-footprint OS App-Data Session Vault, declarative Shader/Geometry/Compositor node graphs, and armature/IK rigging.",
   "type": "module",
   "license": "MIT",
   "keywords": [
@@ -12,13 +12,17 @@
     "codex",
     "antigravity",
     "mcp",
-    "gamedev"
+    "gamedev",
+    "subd",
+    "vfx"
   ],
   "scripts": {
+    "sync": "node scripts/sync-ops.mjs",
     "validate": "node scripts/validate-skills.mjs",
+    "test": "python -m unittest discover -s tests -v",
     "bundle:chatgpt": "node scripts/bundle-chatgpt.mjs",
-    "check": "node scripts/validate-skills.mjs && python3 -m compileall -q skills/blender-setup/templates/scripts",
-    "figures": "python3 tools/make_figures.py"
+    "check": "node scripts/sync-ops.mjs && node scripts/validate-skills.mjs && python -m compileall -q skills/blender-setup/templates/scripts mcp/blender_kit_mcp && python -m unittest discover -s tests",
+    "figures": "python tools/make_figures.py"
   },
   "files": [
     "skills",
@@ -27,6 +31,7 @@
     "docs",
     "evals",
     "scripts",
+    "tests",
     "README.md",
     "LICENSE",
     "tools"

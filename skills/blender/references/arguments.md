@@ -4,13 +4,15 @@
 |---|---|---|---|
 | mode | prop char hands env match rig anim fx cam retopo fix optimize export audit ask doctor | classify from text | first token |
 | "<what>" | free text in quotes | required for new asset | becomes the asset name (PascalCase) |
+| target= | game_realtime film_cinematic dual_cage | config.md target_mode | selects real-time game vs Catmull-Clark SubD film pipeline |
+| swarm= | auto single swarm | config.md swarm_mode | spawns 5-role specialist swarm on multi-part assets |
 | ref= | path to image(s), comma separated | none | triggers blender-ref first |
-| role= | row name from config.md Triangle budgets | ask or classify [ASSUMED] | picks the budget row |
+| role= | row name from config.md budgets | ask or classify [ASSUMED] | picks the triangle or SubD cage budget row |
 | tris= | integer | from role | overrides the budget; label [USER] |
 | style= | voxel lowpoly stylized realistic | config.md style | |
 | rigor= | strict balanced flex | config.md rigor | how rigid the workflow is |
 | fx= | realistic stylized lowpoly voxel | config.md fx_style | VFX style for this effect |
-| engine= | profile name in docs/blender/engines/ | config.md engine | |
+| engine= | profile name in docs/blender/engines/ | config.md engine | use `film-subd` for `target=film_cinematic` |
 | platform= | pc mobile | config.md platform | mobile = Mobile column |
 | anim= | clip names, comma separated | none | animate stage |
 | rig | flag | no | adds rig + animate stages to prop/char |
@@ -18,9 +20,10 @@
 | run all | phrase | no | run chain until first FAIL |
 
 Examples:
+- `/blender prop "CyberKatana" target=film_cinematic swarm=swarm`
 - `/blender prop "WoodCrate" ref=crate.png role=prop-small style=lowpoly`
-- `/blender char "Knight" role=char-npc rig anim=idle,walk`
+- `/blender char "Knight" role=char-npc target=dual_cage rig anim=idle,walk`
 - `/blender hands "KnightHand" style=stylized`
-- `/blender fix` (operates on the selected mesh in Blender)
+- `/blender fix` (operates on the target mesh in Blender)
 - `/blender fx "CyanSlash" fx=lowpoly`
 - `/blender cam "HeroReveal" shots=3`

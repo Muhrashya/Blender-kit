@@ -8,17 +8,17 @@ Contents: 1 table | 2 interrupt protocol | 3 examples
 | 1 | image attached, "like this", "from this picture", "dari gambar", "sesuai referensi" | reference analysis | blender-ref | yes if asset not started |
 | 2 | hand, finger, thumb, glove, paw, claw, tangan, jari, sarung tangan | hands | blender-hands | yes |
 | 3 | fix topology, repair, clean up mesh, bad flow, ngon, pole, uneven, double shell, rapikan, perbaiki topologi, bersihkan mesh | fix topology | blender-topology-fix | yes |
-| 4 | topology, edge flow, loops, quads, triangles, quads to tris, polycount, tris, budget, reduce, lower poly, kurangi | topology rules | blender-topology | yes |
+| 4 | topology, edge flow, loops, quads, triangles, quads to tris, polycount, tris, budget, reduce, lower poly, subd, subdivision, holding loops, support loops, edge crease, bevel weight, film topology, dual cage, kurangi | topology rules | blender-topology | yes |
 | 5 | retopo, high poly to low poly, sculpt, AI mesh messy, remesh, quadriflow | retopology | blender-retopo | yes |
-| 6 | UV, unwrap, seam, texel, bake, normal map, AO, texture stretched, missing texture, white patches | UV and bake | blender-uv-bake | yes |
-| 7 | material, color, metal, wood, stone, crystal, glow, emission, gleam, shimmer, transparent, PBR, palette | material | blender-material | yes |
-| 8 | rig, bone, armature, skin, weights, IK, deform, mesh tears when bent, pinch | rigging | blender-rig | yes |
+| 6 | UV, uv mapping, uv wrapping, unwrap, seam, texel, facet atlas, zero bleed, conformal, box projection, bake, normal map, AO, texture stretched, missing texture, white patches | UV and bake | blender-uv-bake | yes |
+| 7 | material, color, metal, wood, stone, crystal, glow, emission, gleam, shimmer, transparent, PBR, palette, shader nodes, node graph, procedural shader, compositor, glare, bloom | material | blender-material | yes |
+| 8 | rig, bone, armature, skin, weights, IK, constraints, envelope weights, kdtree weights, deform, mesh tears when bent, pinch | rigging | blender-rig | yes |
 | 9 | animate, animation, walk, run, idle, attack, wave, floating, loop, clip, keyframe, NLA | animation | blender-animate | yes |
 | 10 | effect, VFX, gleam sweep, starburst, glint, slash, explosion, smoke, fire, aura, shockwave, beam, trail, particle, hit, magic, efek | VFX | blender-vfx | yes |
 | 10b | camera, shot, shot list, cinematic, dolly, pan, tilt, tracking shot, zoom, whip pan, crane, turntable, trailer, kamera, sinematik, sudut kamera | cinematic camera | blender-camera | yes |
 | 11 | export, FBX, GLB, glTF, import into Roblox/Unity/Unreal/Godot, scale wrong, rotated 90, ekspor | export | blender-export | yes |
 | 12 | check, audit, ready?, ship?, review, QA, cek, compare to reference | QA | blender-qa | yes |
-| 13 | model, build, make, create, bevel, extrude, inset, lathe, weapon, sword, gun, vehicle, car, building, house, tree, rock, crystal, furniture, prop, character, creature, buat, bikin | modeling | blender-model | no (new asset) |
+| 13 | model, build, make, create, bevel, subdivide, extrude, inset, lathe, bridge loops, grid fill, curve tube, geometry nodes, scatter, array, weapon, sword, gun, vehicle, car, building, house, tree, rock, crystal, furniture, prop, character, creature, buat, bikin | modeling | blender-model | no (new asset) |
 | 14 | why, kenapa, wrong, looks weird, dark, black, flipped, missing, error, bug, not working, what is, apa itu, how do I, bagaimana | diagnose / concept | blender-diagnose | yes |
 | 15 | install, setup, connect MCP, engine profile, config | setup | blender-setup | yes |
 | 16 | anything not about Blender or 3D assets | outside | none (answer normally) | n/a |

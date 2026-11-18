@@ -1,13 +1,14 @@
 # audit_mesh.py - measures the FINAL (modifier-evaluated) mesh and prints JSON.
-# Configure the 4 variables, run through execute_blender_code. Quote the numbers; never estimate.
+# Context-free by default: prefers explicit TARGETS list, else all visible scene meshes.
 import bpy, bmesh, json, math
 
 BUDGET = 2000            # triangle budget from docs/blender/config.md (or user)
 ALLOW_OPEN = False       # True for single-sided cards, FX strips, planes
 CHECK_UV_RANGE = False   # True for FX meshes: UVs must stay inside 0-1
-TARGETS = "SELECTED"     # "SELECTED" or a list of object names
+TARGETS = []             # Explicit list of object names (e.g. ["SM_Asset"]), "SELECTED", or [] = all visible meshes
+TARGET_MODE = "game_realtime"  # "game_realtime" | "film_cinematic"
 
-def audit(obj, budget, allow_open, check_uv_range):
+def audit(obj, budget, allow_open, check_uv_range, target_mode="game_realtime"):
     dg = bpy.context.evaluated_depsgraph_get()
     ev = obj.evaluated_get(dg)
     me = ev.to_mesh()
@@ -25,6 +26,7 @@ def audit(obj, budget, allow_open, check_uv_range):
                         uv_out += 1
         r = {
             "object": obj.name,
+            "target_mode": target_mode,
             "verts": len(bm.verts), "faces": len(bm.faces),
             "tris": tris, "tri_budget": budget,
             "quads": sum(1 for f in bm.faces if len(f.verts) == 4),
@@ -48,7 +50,7 @@ def audit(obj, budget, allow_open, check_uv_range):
         bm.free()
         ev.to_mesh_clear()
     checks = {
-        "within_budget": r["tris"] <= budget,
+        "within_budget": (target_mode == "film_cinematic") or (budget <= 0) or (r["tris"] <= budget),
         "no_ngons": r["ngons"] == 0,
         "no_doubles": r["doubles"] == 0,
         "no_zero_area": r["zero_area_faces"] == 0,
@@ -62,7 +64,13 @@ def audit(obj, budget, allow_open, check_uv_range):
     r["failed"] = [k for k, v in checks.items() if not v]
     return r
 
-objs = bpy.context.selected_objects if TARGETS == "SELECTED" else [bpy.data.objects[n] for n in TARGETS]
-out = [audit(o, BUDGET, ALLOW_OPEN, CHECK_UV_RANGE) for o in objs if o.type == "MESH"]
+if TARGETS == "SELECTED":
+    objs = list(bpy.context.selected_objects)
+elif isinstance(TARGETS, (list, tuple)) and len(TARGETS) > 0:
+    objs = [bpy.data.objects[n] for n in TARGETS if n in bpy.data.objects]
+else:
+    objs = [o for o in bpy.context.scene.objects if o.type == "MESH" and o.visible_get()]
+
+out = [audit(o, BUDGET, ALLOW_OPEN, CHECK_UV_RANGE, TARGET_MODE) for o in objs if o.type == "MESH"]
 print(json.dumps(out, indent=2))
 print("AUDIT_PASS=" + str(bool(out) and all(x["pass"] for x in out)))
